@@ -6,9 +6,13 @@ const removeBtn = document.getElementById("removeBtn");
 const loading = document.getElementById("loading");
 const container = document.getElementById("container");
 
-// ✅ Use Render backend endpoint instead of Netlify
-// Replace with your actual Render service URL
-const API_BASE = "https://your-app.onrender.com";
+// ✅ Auto-switch between local and Render backend
+// Local dev: http://localhost:8000 (or whatever port uvicorn runs on)
+// Render: https://your-app.onrender.com
+const API_BASE =
+  window.location.hostname === "localhost"
+    ? "http://localhost:8000"
+    : "https://your-app.onrender.com";
 
 console.log("Backend API Base URL:", API_BASE); // helpful debug log
 
@@ -50,7 +54,7 @@ uploadBtn.addEventListener("click", async () => {
   formData.append("file", file);
 
   try {
-    // ✅ Call Render backend endpoint
+    // ✅ Call backend (local or Render depending on environment)
     const response = await fetch(`${API_BASE}/predict`, {
       method: "POST",
       body: formData,
@@ -60,10 +64,13 @@ uploadBtn.addEventListener("click", async () => {
     const data = await response.json();
 
     // Save only the response keys
-    localStorage.setItem("diagnosisResult", JSON.stringify({
-      predicted_class: data.predicted_class,
-      confidence: data.confidence
-    }));
+    localStorage.setItem(
+      "diagnosisResult",
+      JSON.stringify({
+        predicted_class: data.predicted_class,
+        confidence: data.confidence,
+      })
+    );
 
     window.location.href = "result.html";
   } catch (err) {
