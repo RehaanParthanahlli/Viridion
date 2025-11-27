@@ -1,81 +1,147 @@
-const imageInput = document.getElementById("imageInput");
-const preview = document.getElementById("preview");
-const fileName = document.getElementById("file-name");
-const uploadBtn = document.getElementById("uploadBtn");
-const removeBtn = document.getElementById("removeBtn");
-const loading = document.getElementById("loading");
-const container = document.getElementById("container");
+// ============================================
+// GreenGuardian - Upload & Prediction Script
+// ============================================
 
-// ✅ Auto-switch between local and Render backend
-// Local dev: http://localhost:8000 (or whatever port uvicorn runs on)
-// Render: https://your-app.onrender.com
-const API_BASE =
-  window.location.hostname === "localhost"
-    ? "http://localhost:8000"
-    : "https://your-app.onrender.com";
+const API_URL = "http://localhost:8000/predict";
 
-console.log("Backend API Base URL:", API_BASE); // helpful debug log
+document.addEventListener("DOMContentLoaded", function () {
+  const imageInput = document.getElementById("imageInput");
+  const preview = document.getElementById("preview");
+  const uploadBtn = document.getElementById("uploadBtn");
+  const removeBtn = document.getElementById("removeBtn");
+  const fileName = document.getElementById("file-name");
+  const loading = document.getElementById("loading");
+  const container = document.getElementById("container");
 
-imageInput.addEventListener("change", () => {
-  const file = imageInput.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      preview.src = e.target.result;
-      preview.style.display = "block";
-      uploadBtn.style.display = "inline-block";
-      removeBtn.style.display = "inline-block";
-      container.classList.add("uploaded");
-    };
-    reader.readAsDataURL(file);
-    fileName.textContent = file.name;
-  }
-});
+  // Handle file selection - show preview
+  imageInput.addEventListener("change", function () {
+    const file = imageInput.files[0];
 
-removeBtn.addEventListener("click", () => {
-  imageInput.value = "";
-  preview.src = "";
-  preview.style.display = "none";
-  uploadBtn.style.display = "none";
-  removeBtn.style.display = "none";
-  fileName.textContent = "No file chosen";
-  container.classList.remove("uploaded");
-});
+    if (file) {
+      // Validate file type
+      const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+      if (!validTypes.includes(file.type.toLowerCase())) {
+        alert("⚠️ Please upload a valid image file (JPG, PNG, GIF, WebP)");
+        imageInput.value = "";
+        return;
+      }
 
-uploadBtn.addEventListener("click", async () => {
-  const file = imageInput.files[0];
-  if (!file) {
-    alert("Please upload an image first!");
-    return;
-  }
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        alert("⚠️ File size should be less than 10MB!");
+        imageInput.value = "";
+        return;
+      }
 
-  loading.style.display = "block";
-  const formData = new FormData();
-  formData.append("file", file);
+      // Show filename
+      fileName.textContent = file.name;
+      fileName.style.color = "#43a047";
 
-  try {
-    // ✅ Call backend (local or Render depending on environment)
-    const response = await fetch(`${API_BASE}/predict`, {
-      method: "POST",
-      body: formData,
-    });
+      // Show preview image
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.src = e.target.result;
+        preview.style.display = "block";
+        
+        // Add uploaded class to container for styling
+        container.classList.add("uploaded");
+        
+        // Show upload and remove buttons
+        uploadBtn.style.display = "inline-block";
+        removeBtn.style.display = "inline-block";
+      };
+      reader.readAsDataURL(file);
+    }
+  });
 
-    if (!response.ok) throw new Error("Backend error");
-    const data = await response.json();
+  // Handle remove button - clear selection
+  removeBtn.addEventListener("click", function () {
+    imageInput.value = "";
+    preview.src = "";
+    preview.style.display = "none";
+    fileName.textContent = "No file chosen";
+    fileName.style.color = "#3bb543";
+    uploadBtn.style.display = "none";
+    removeBtn.style.display = "none";
+    container.classList.remove("uploaded");
+  });
 
-    // Save only the response keys
-    localStorage.setItem(
-      "diagnosisResult",
-      JSON.stringify({
-        predicted_class: data.predicted_class,
-        confidence: data.confidence,
-      })
-    );
+  // Handle upload button - send to API
+  uploadBtn.addEventListener("click", async function () {
+    const file = imageInput.files[0];
 
-    window.location.href = "result.html";
-  } catch (err) {
-    alert("Error connecting to backend: " + err.message);
-  } finally {
-    loading.style.display = "none";
-  }
+    if (!file) {
+      alert("⚠️ Please select an image first!");
+      return;
+    }
+
+    // Show loading state
+    loading.style.display = "block";
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = "🔄 Understanding...";
+    removeBtn.disabled = true;
+
+    try {
+      // Create FormData and append the file
+      const formData = new FormData();
+      // CRITICAL: parameter name must be "file" to match FastAPI endpoint
+      formData.append("file", file);
+
+      // Send POST request to FastAPI backend
+      const response = await fetch(API_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Validate response
+      if (!data.predicted_class || data.confidence === undefined) {
+        throw new Error("Invalid response from server");
+      }
+
+      // Store result in localStorage for result.html
+      localStorage.setItem("diagnosisResult", JSON.stringify(data));
+
+      // Show success message briefly
+      loading.textContent = "✅ Understanding complete! Redirecting...";
+      loading.style.color = "#43a047";
+
+      // Redirect to result page after short delay
+      setTimeout(() => {
+        window.location.href = "result.html";
+      }, 1000);
+
+    } catch (error) {
+      console.error("Error:", error);
+
+      // Hide loading
+      loading.style.display = "none";
+
+      // Show error message
+      let errorMsg = "❌ Failed to understand image.\n\n";
+
+      if (error.message.includes("fetch") || error.message.includes("Failed to fetch")) {
+        errorMsg += "Please make sure:\n";
+        errorMsg += "1. FastAPI server is running (python main.py)\n";
+        errorMsg += "2. Server is accessible at http://localhost:8000\n";
+        errorMsg += "3. Check browser console (F12) for details";
+      } else {
+        errorMsg += error.message;
+      }
+
+      alert(errorMsg);
+
+      // Re-enable buttons
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "✔️ Check Disease";
+      removeBtn.disabled = false;
+    }
+  });
 });
