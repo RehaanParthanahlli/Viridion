@@ -2,7 +2,7 @@
 // GreenGuardian - Upload & Prediction Script
 // ============================================
 
-const API_URL = "http://localhost:8000/predict";
+const API_URL = "https://Viridion.onrender.com/predict";
 
 document.addEventListener("DOMContentLoaded", function () {
   const imageInput = document.getElementById("imageInput");
