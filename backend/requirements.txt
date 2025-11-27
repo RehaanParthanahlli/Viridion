@@ -1,6 +1,6 @@
 fastapi==0.115.0
-uvicorn[standard]==0.32.0   # adds gunicorn, httptools, websockets for production
-tensorflow-cpu==2.15.0
+uvicorn[standard]==0.32.0
+tensorflow==2.15.0
 numpy==1.25.2
-python-multipart==0.0.9     # needed if you handle file uploads/forms
-requests==2.31.0            # common for API calls
+python-multipart==0.0.9
+requests==2.31.0
