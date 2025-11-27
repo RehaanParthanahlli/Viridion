@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GreenGuardian - Crop Disease Detection</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #e8f5e9, #c8e6c9);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      transition: background 0.5s ease;
+      border: none;
+    }
+    /* Full-page blurred background image */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("WhatsApp Image 2025-10-28 at 21.33.08_f3e6e384.jpg");
+  background-size: cover;
+  background-position: center;
+  filter: blur(8px);
+  z-index: -1; /* keeps it behind everything */
+}
+
+
+    .container {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      text-align: center;
+      border: 3px solid white;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .container.uploaded {
+      border: 10px solid white;
+      transform: scale(1.02);
+      border: none;
+    }
+
+    /* Farmer icon with hover glow */
+    .logo {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      border: none;
+      display: inline-block;
+      transition: transform 0.3s ease, text-shadow 0.3s ease;
+    }
+    .logo:hover {
+      transform: scale(1.2) rotate(8deg);
+      text-shadow: 0 0 12px #43a047aa, 0 0 24px #66bb6a99;
+      cursor: pointer;
+      border: none;
+    }
+
+    .file-upload {
+      margin-bottom: 20px;
+      border: none;
+    }
+
+    #imageInput {
+      display: none;
+      border: none;
+    }
+
+    /* Upload button style */
+    .upload-label,
+    #backBtn {
+      display: inline-block;
+      padding: 12px 25px;
+      border-radius: 30px;
+      background: linear-gradient(45deg, #65d46b, #66bb6a);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.3s;
+      border: none;
+    }
+
+    .upload-label:hover,
+    #backBtn:hover {
+      transform: scale(1.05);
+      border: none;
+    }
+
+    #file-name {
+      display: block;
+      margin-top: 10px;
+      font-style: italic;
+      color: #3bb543;
+      border: none;
+    }
+
+    #preview {
+      max-width: 70%;
+      border: none;
+      height: auto;
+      display: none;
+      margin: 20px auto 0;
+      border-radius: 15px;
+      border: 3px solid white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .container.uploaded #preview {
+      display: block;
+      border: none;
+    }
+
+    #uploadBtn {
+      padding: 12px 30px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(45deg, #81de85, #66bb6a);
+      color: white;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+      display: none;
+    }
+
+    #uploadBtn:hover {
+      transform: scale(1.05);
+      border: none;
+    }
+
+    #removeBtn {
+      display: none;
+      padding: 12px 30px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(45deg, #c98c8b, #fe8987);
+      color: white;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    #removeBtn:hover {
+      transform: scale(1.05);
+      border: none;
+    }
+
+    #loading {
+      display: none;
+      margin-top: 20px;
+      color: #42bb4a;
+      border: none;
+    }
+
+    /* Back button styling identical to upload label */
+    #backBtn {
+      margin-top: 20px;
+    }
+    .button-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px; /* space between buttons */
+}
+
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <div class="logo" title="Smart Farming Assistant">🧑‍🌾</div>
+
+    <div class="file-upload">
+      <input type="file" id="imageInput" accept="image/*" />
+      <label for="imageInput" class="upload-label">🍁 Upload Leaf Image</label>
+      <span id="file-name">No file chosen</span>
+    </div>
+
+<img id="preview" alt="Preview" />
+
+<div class="button-group">
+  <button id="uploadBtn">✔️ Check Disease</button>
+  <button id="removeBtn">⭕ Remove Image</button>
+  <button id="backBtn">⬅️ Back to Disease Info</button>
+</div>
+
+<div id="loading">Please wait ⏳</div>
+
+  <script src="script.js"></script>
+  <script>
+    // Back button -> go back to diseases.html (one folder up)
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "../diseases.html";
+    });
+  </script>
+</body>
+</html>

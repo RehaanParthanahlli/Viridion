@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgriGuard | Diagnosis Result</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* 🌿 Global Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      color: #222;
+    }
+
+    /* 🌾 Blurred Background (kept behind everything) */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("WhatsApp\ Image\ 2025-10-28\ at\ 21.33.08_f3e6e384.jpg");
+      background-size: cover;
+      background-position: center;
+      filter: blur(10px) brightness(0.9);
+      z-index: -1;
+      transform: scale(1.05);
+      animation: moveBackground 45s linear infinite alternate;
+    }
+
+    @keyframes moveBackground {
+      from { background-position: 0 0; }
+      to { background-position: 100% 100%; }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      padding: 3rem 3.5rem;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      width: 90%;
+      max-width: 700px;
+      text-align: center;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      color: #155724;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    p {
+      color: #222;
+      font-size: 1.05rem;
+      margin: 0.5rem 0;
+    }
+
+    .highlight {
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .section {
+      margin-top: 2rem;
+      background: #f7fdf9;
+      border-radius: 18px;
+      padding: 1.3rem 1.5rem;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+      text-align: left;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .section:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .section h2 {
+      font-size: 1.3rem;
+      color: #0b6e1a;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+    }
+
+    .section.inorganic h2 {
+      color: #0040a8;
+    }
+
+    a {
+      display: block;
+      color: #1d741d;
+      text-decoration: none;
+      margin: 0.4rem 0;
+      padding: 6px 0;
+      border-left: 3px solid transparent;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    a:hover {
+      border-left: 3px solid #34c759;
+      padding-left: 8px;
+      color: #0f5318;
+    }
+
+    .section.inorganic a:hover {
+      border-left: 3px solid #3b82f6;
+      color: #173b9a;
+    }
+
+    #backBtn {
+      margin-top: 2rem;
+      background: linear-gradient(90deg, #34c759, #28a745);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 12px rgba(40, 167, 69, 0.3);
+    }
+
+    #backBtn:hover {
+      transform: translateY(-3px);
+      background: linear-gradient(90deg, #2fa74a, #239c3e);
+      box-shadow: 0 8px 18px rgba(40, 167, 69, 0.4);
+    }
+
+    footer {
+      margin-top: 1.8rem;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 2rem;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+    }
+    
+    
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🌿 Diagnosis Result</h1>
+    <p><strong>Disease:</strong> <span id="predicted_class" class="highlight"></span></p>
+    <p><strong>Confidence:</strong> <span id="confidence" class="highlight"></span></p>
+
+    <div id="remedySections"></div>
+
+    <button id="backBtn">🔁 Check Another</button>
+
+    <footer>AgriGuard © 2025 | Intelligent Crop Health</footer>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const data = JSON.parse(localStorage.getItem("diagnosisResult"));
+      const remedySections = document.getElementById("remedySections");
+
+      if (data) {
+        const predictedClass = data.predicted_class || "Unknown";
+        const confidence = data.confidence ? (data.confidence * 100).toFixed(2) + "%" : "N/A";
+
+        document.getElementById("predicted_class").textContent = predictedClass;
+        document.getElementById("confidence").textContent = confidence;
+
+        if (predictedClass.toLowerCase().includes("healthy")) {
+          remedySections.innerHTML = `
+            <div class="section">
+              <h2>🌱 Your plant is healthy!</h2>
+              <p>Keep your plant well-watered, ensure adequate sunlight, and monitor soil conditions regularly.</p>
+            </div>`;
+        } else {
+          const [crop, disease] = predictedClass.split("___");
+          const cropName = crop || "Plant";
+          const disName = disease ? disease.replace(/_/g, " ") : "Unknown disease";
+
+          const organicRemedies = `
+            <div class="section organic">
+              <h2>🌱 Organic Remedies</h2>
+              <a href="https://www.google.com/search?q=${encodeURIComponent(`organic remedies for ${cropName} ${disName}`)}" target="_blank">🔍 Organic Remedies</a>
+              <a href="https://www.google.com/search?q=${encodeURIComponent(`organic tools for ${cropName} ${disName}`)}" target="_blank">🧰 Organic Tools</a>
+              <a href="https://www.google.com/search?q=${encodeURIComponent(`organic chemicals for ${cropName} ${disName}`)}" target="_blank">💧 Organic Chemicals</a>
+            </div>`;
+
+          const inorganicRemedies = `
+            <div class="section inorganic">
+              <h2>🧪 Inorganic Remedies</h2>
+              <a href="https://www.google.com/search?q=${encodeURIComponent(`inorganic remedies for ${cropName} ${disName}`)}" target="_blank">🔍 Inorganic Remedies</a>
+              <a href="https://www.google.com/search?q=${encodeURIComponent(`inorganic tools for ${cropName} ${disName}`)}" target="_blank">🧰 Inorganic Tools</a>
+              <a href="https://www.google.com/search?q=${encodeURIComponent(`inorganic chemicals for ${cropName} ${disName}`)}" target="_blank">💧 Inorganic Chemicals</a>
+            </div>`;
+
+          remedySections.innerHTML = organicRemedies + inorganicRemedies;
+        }
+      } else {
+        document.querySelector(".card").innerHTML = "<h2>No result found. Please upload again.</h2>";
+      }
+
+      document.getElementById("backBtn").addEventListener("click", () => {
+        localStorage.removeItem("diagnosisResult");
+        window.location.href = "index.html";
+      });
+    });
+    
+  </script>
+</body>
+</html>

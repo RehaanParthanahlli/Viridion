@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriGuard — Region Selector</title>
+
+  <!-- Leaflet Map Library -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {box-sizing: border-box;font-family: 'Poppins', sans-serif;}
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f5fff8, #d9f5e3);
+      color: #043a18;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 1.2rem;
+      background: rgba(43,182,115,0.1);
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      color: #038c4c;
+    }
+
+    .main {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .selectors {
+      flex: 1;
+      min-width: 300px;
+      background: rgba(255,255,255,0.8);
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+
+    .selectors h2 {
+      text-align: center;
+      color: #038c4c;
+      margin-top: 0;
+    }
+
+    select {
+      width: 100%;
+      background: rgba(255,255,255,0.9);
+      color: #043a18;
+      padding: 0.7rem 1rem;
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 10px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    select:hover {border-color: #038c4c;}
+
+    button {
+      width: 100%;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      padding: 0.8rem 1.2rem;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      margin-top: 0.5rem;
+    }
+
+    .primary {
+      background: linear-gradient(90deg, #3ad86b, #1dbf58);
+      color: #fff;
+    }
+
+    .primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(43,182,115,0.4);
+    }
+
+    .ghost {
+      background: transparent;
+      border: 1px solid rgba(0,0,0,0.2);
+      color: #043a18;
+    }
+
+    .ghost:hover {
+      border-color: #038c4c;
+      color: #038c4c;
+      transform: translateY(-2px);
+    }
+
+    .infoBox {
+      background: rgba(255,255,255,0.8);
+      padding: 1rem;
+      border-radius: 10px;
+      margin-top: 1rem;
+      text-align: center;
+      color:#043a18;
+      font-size: 0.95rem;
+    }
+
+    #map {
+      flex: 1.2;
+      min-width: 380px;
+      height: 400px;
+      border-radius: 12px;
+      border: 2px solid rgba(0,0,0,0.1);
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      margin-top: 0.8rem;
+    }
+
+    footer {
+      text-align: center;
+      color: #256239;
+      padding: 1rem;
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>🌾 AgriGuard — Smart Region Selector</h1>
+    <p>Select your region to explore crop disease information.</p>
+  </header>
+
+  <div class="main">
+    <div class="selectors">
+      
+
+      <h2>🗺️ Select Region</h2>
+
+      <select id="countrySelect" onchange="onCountryChange()">
+        <option value="">Select Country</option>
+        <option value="India">India</option>
+      </select>
+
+      <select id="stateSelect" onchange="onStateChange()" disabled>
+        <option value="">Select State</option>
+      </select>
+
+      <button class="primary" onclick="showDiseases()">Show Common Diseases</button>
+      <button class="ghost" onclick="resetMap()">Reset Map</button>
+      <button class="ghost" onclick="goBack()">← Back to Home</button>
+
+      <div class="infoBox" id="infoBox">
+        🌍 Start by selecting your country.
+      </div>
+    </div>
+
+    <div id="map"></div>
+  </div>
+
+  <footer>AgriGuard Hackathon Project — Team of 3 | AI + Sustainability 🌱</footer>
+
+  <script>
+    const map = L.map('map').setView([20, 78], 4);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors, © CARTO'
+    }).addTo(map);
+
+    const infoBox = document.getElementById("infoBox");
+
+    const data = {
+      "India": [
+        "Andhra Pradesh", "Karnataka", "Kerala", "Tamil Nadu", "Telangana",
+        "Maharashtra", "Uttar Pradesh", "Gujarat", "Rajasthan", "Punjab",
+        "West Bengal", "Madhya Pradesh", "Odisha", "Bihar", "Assam",
+        "Goa", "Chhattisgarh", "Jharkhand", "Haryana", "Himachal Pradesh"
+      ]
+    };
+
+    function onCountryChange() {
+      const val = document.getElementById("countrySelect").value;
+      if (val === "India") {
+        document.getElementById("stateSelect").disabled = false;
+        populateStates();
+        map.setView([22.5, 78.9], 5);
+        infoBox.innerHTML = "🇮🇳 India selected. Choose a state.";
+      }
+    }
+
+    function populateStates() {
+      const stateSelect = document.getElementById("stateSelect");
+      stateSelect.innerHTML = '<option value="">Select State</option>';
+      data["India"].forEach(state => {
+        const opt = document.createElement("option");
+        opt.value = state;
+        opt.textContent = state;
+        stateSelect.appendChild(opt);
+      });
+    }
+
+    function onStateChange() {
+      const state = document.getElementById("stateSelect").value;
+      if (!state) return;
+      zoomToState(state);
+      infoBox.innerHTML = `📍 State selected: <b>${state}</b>.`;
+    }
+
+    function showDiseases() {
+      const country = document.getElementById("countrySelect").value;
+      const state = document.getElementById("stateSelect").value;
+
+      if (!country || !state) {
+        alert("Please select at least a country and state!");
+        return;
+      }
+
+      window.location.href = `diseases.html?region=${encodeURIComponent(state)}`;
+    }
+
+    function resetMap() {
+      map.setView([20, 78], 4);
+      document.getElementById("countrySelect").value = "";
+      document.getElementById("stateSelect").innerHTML = "<option value=''>Select State</option>";
+      document.getElementById("stateSelect").disabled = true;
+      infoBox.innerHTML = "🗺️ Map reset. Start again by selecting a country.";
+    }
+
+    function zoomToState(state) {
+      const centers = {
+        "Tamil Nadu": [11, 78], "Kerala": [10, 76], "Karnataka": [15, 76],
+        "Maharashtra": [19, 75], "Gujarat": [22, 72], "Uttar Pradesh": [26, 81],
+        "West Bengal": [23, 87], "Delhi": [28.6, 77.2], "Rajasthan": [26, 74],
+        "Punjab": [31, 75], "Assam": [26, 93], "Madhya Pradesh": [23, 78]
+      };
+      if (centers[state]) map.setView(centers[state], 7);
+    }
+    function goBack() {
+  window.location.href = "homepage2.html";
+}
+
+  </script>
+</body>
+</html>

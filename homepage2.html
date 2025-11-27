@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AgriGuard – AI Crop Disease Detection</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css?family=Quicksand:700,500,400&display=swap" rel="stylesheet">
+</head>
+<body>
+  <style>
+  body {
+  font-family: 'Quicksand', Arial, sans-serif;
+  margin: 0;
+  background: linear-gradient(120deg, #c0eaff 0%, #faffc3 100%);
+  overflow-x: hidden;
+  min-height: 100vh;
+  position: relative;
+}
+
+#particle-canvas {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 0; pointer-events: none;
+}
+
+/* Page Transitions */
+#page-transition-overlay {
+  position: fixed;
+  left: 0; top: 0; width: 100vw; height: 100vh;
+  z-index: 2000;
+  pointer-events: none;
+  background: linear-gradient(120deg,#388e3c88 0%,#c0eaff88 100%);
+  opacity: 0;
+  transition: opacity 0.7s;
+}
+
+.show-overlay { opacity: 1 !important;}
+.fadein { animation: fadein 1s; }
+.fadeout { animation: fadeout 0.8s; }
+.slidein { animation: slidein 1.3s; }
+@keyframes fadein { 0% {opacity:0; transform:scale(0.85);} 100% {opacity:1;} }
+@keyframes fadeout { 0% {opacity:1;} 100% {opacity:0; transform:scale(0.85);} }
+@keyframes slidein { 0% {opacity:0; transform:translateY(50px);} 100% {opacity:1; transform:translateY(0);} }
+@keyframes gradientMove {
+  0% { background: linear-gradient(120deg,#c0eaff 0%,#faffc3 100%);}
+  60% { background: linear-gradient(120deg,#faffc3 0%,#c0eaff 100%);}
+  100% { background: linear-gradient(120deg,#c0eaff 0%,#faffc3 100%);}
+}
+body { animation: gradientMove 13s linear infinite alternate; }
+
+.glass {
+  background: rgba(255,255,255,0.16);
+  backdrop-filter: blur(7px);
+  border-radius: 17px;
+  box-shadow: 0 8px 32px 0 rgba(44,62,80,0.22);
+}
+
+/* Parallax Cards (tilt effect) */
+.parallax-card {
+  will-change: transform;
+  transition: box-shadow 0.16s, transform 0.16s;
+  box-shadow: 0 6px 36px 0 rgba(57,190,109,0.10);
+}
+.parallax-hover {
+  box-shadow: 0 16px 46px 0 rgba(57,190,109,0.25);
+  transform: scale(1.07) rotate3d(var(--rx),var(--ry),0,7deg);
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 7vw;
+  margin: 10px auto;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo { height: 48px; filter: drop-shadow(0 0 7px #388e3c65); }
+.nav-links .nav-btn {
+  margin: 0 7px;
+  padding: 9px 22px;
+  background: linear-gradient(90deg,#388e3c,#43a047);
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 25px;
+  box-shadow: 0 2px 8px #388e3c33;
+  font-size: 1.1rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
+}
+
+/* Liquid (bubble/splash) Animation on buttons */
+.liquid {
+  position: relative;
+  overflow: hidden;
+}
+.liquid:hover::before {
+  opacity: 1;
+  animation: liquidmove 0.8s linear;
+}
+.liquid::before {
+  content: '';
+  position: absolute;
+  border-radius: 40%;
+  width: 180px; height: 70px;
+  left: 50%; top: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle,#43a04755 40%,#7ed95777 70%,transparent 100%);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0);
+}
+@keyframes liquidmove {
+  0% {transform: translate(-50%,-50%) scale(0); opacity:0;}
+  60% {transform: translate(-50%,-50%) scale(1.08); opacity:1;}
+  100% {transform: translate(-50%,-50%) scale(0.01); opacity:0;}
+}
+
+.hero {
+  padding: 62px 2vw 25px 2vw;
+  margin: 2.4vw auto 20px auto;
+  max-width: 650px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+.typewriter { font-size: 2.75rem; font-weight: 700; color:#1d5128; letter-spacing:1.3px; height: 3.2rem;}
+.neon, .typewriter { text-shadow: 0 0 15px #7ed957, 0 0 22px #388e3c; }
+.subtitle { display: block; font-size: 1.37rem; color: #43a047; font-weight: 600;}
+.hero-desc { font-size: 1.13rem; color: #237524; margin-top: 11px; margin-bottom: 26px; }
+
+.stats-box {
+  display: flex; justify-content: center; gap: 28px; margin: 22px 0 7px 0; z-index: 3;
+}
+.stat-card {
+  background: rgba(255,255,255,0.27);
+  padding: 14px 27px;
+  border-radius: 12px;
+  box-shadow:0 0 16px #baff7235;
+  text-align: center;
+  min-width: 110px;
+  transition: transform 0.22s;
+}
+.stat-card:hover { transform: scale(1.17) rotate(-3deg);}
+.stat-num { font-size: 2.1rem; color: #47a529; font-weight: bold; text-shadow: 0 1px 8px #90ee9067; }
+.stat-label { font-size: 1.05rem; color: #19762e; margin-top: 4px; font-weight: 500;}
+
+.cta-btn {
+  margin: 24px 0; padding: 15px 40px; background: linear-gradient(90deg,#7ed957,#43a047);
+  color: #fff; border: none; border-radius: 35px; font-size: 1.15rem; letter-spacing: 0.03em;
+  font-weight: bold; cursor: pointer; box-shadow: 0 3px 12px #6ae36033;
+  transition: background 0.2s, transform 0.25s;
+}
+.cta-btn:hover{ background: linear-gradient(90deg,#43a047,#7ed957); transform: scale(1.13) rotate(2.5deg);}
+.bounce { animation: bounce 1s infinite alternate; }
+@keyframes bounce { 0% {transform: translateY(0);} 100% {transform: translateY(-11px);} }
+
+.demo-video { margin: 23px auto; z-index: 2; }
+.floating-demo-btn {
+  position: absolute; right:25px; bottom:36px; background:linear-gradient(90deg,#17eeab,#388e3c);
+  box-shadow:0 0 20px #43a04766;
+  border:none; border-radius:30px; color:white; font-size:1.12em; font-weight:700; padding:12px 26px;
+  cursor:pointer; animation:bounce 1.2s infinite alternate,glowbtn 2.3s infinite alternate;
+}
+@keyframes glowbtn {
+  0% {box-shadow:0 0 22px #17eeab99;}
+  100%{box-shadow:0 0 45px #43a04733;}
+}
+
+#home-greeting {
+  margin: 13px 0 0 0; font-size: 1.18rem; color: #095f3d; font-weight: 600;
+  text-shadow: 0 1px 8px #81b62288; z-index: 2;
+}
+
+.news-ticker { background: linear-gradient(90deg,#d2f1d9,#fff);}
+.testimonials { background: linear-gradient(90deg,#fffde7,#fff);}
+#testi-carousel { min-height: 70px; transition: opacity 0.6s; }
+#testimonial-text { font-size: 1.10em; letter-spacing:0.02em; }
+.flip-testimonial { transition: transform 0.6s,opacity 0.7s;}
+.flip {transform:rotateY(180deg);opacity:0;}
+
+.faq-list{margin-top:11px;}
+.faq-item{margin-bottom:9px;}
+.faq-question{cursor:pointer;font-weight:bold;background:#19762e33;border-radius:7px;padding:7px 12px;transition:background 0.18s;}
+.faq-question:hover{background:#7ed95722;}
+.faq-answer{display:none;padding:7px 15px;background:#e8fcdc;border-radius:0 0 7px 7px;font-size:0.98em;margin-bottom:7px;animation:fadein 0.6s;}
+
+.form-card {
+  background: rgba(255,255,255,0.92);padding: 28px 22px;border-radius: 16px;
+  margin: 42px auto; box-shadow: 0 2px 18px #388e3c55; max-width: 370px; text-align: center; animation: fadein 0.8s;
+}
+.form-card input{display: block;width: 92%;margin: 13px auto;padding: 11px;border-radius: 8px;
+  border: 1.3px solid #81b622;font-size: 1rem;background: #efefef;}
+.form-card button.cta-btn{margin-top:10px;}
+.form-msg, .link{font-size:0.97em;color:#388e3c;margin-top:15px;}
+.link{text-decoration: underline;cursor:pointer;font-weight: bold;}
+
+footer { background: rgba(242,255,236,0.85); padding: 22px; margin: 45px auto 2px auto; text-align: center;
+  font-size: 0.97rem; border-radius: 18px 18px 0 0; max-width: 670px;box-shadow:0 3px 9px #388e3c22; z-index:2;}
+
+.hidden{display:none!important;}
+#snackbar{ visibility: hidden; min-width: 220px; background-color: #378d36; color: #fff; text-align: center; border-radius: 9px;
+  padding: 16px; position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+  z-index: 1999; font-size:1.12em; box-shadow:0 2px 15px #388e3c33; animation: fadein 0.9s;}
+
+@media only screen and (max-width:750px){
+  .hero{padding:22px 6vw 15px 6vw;font-size:1.05em;}
+  .form-card{margin-top:25px;}
+  .stats-box { flex-direction: column; gap: 15px;}
+  .floating-demo-btn{position:static;display:block;margin:18px auto;}
+}
+.success-stories {
+  max-width: 650px;
+  margin: 38px auto 22px auto;
+  padding: 35px 32px 25px 32px;
+  background: rgba(255,255,255,0.52);
+  border-radius: 17px;
+  box-shadow:0 6px 36px rgba(57,190,109,0.08), 0 1px 9px #388e3c22;
+  text-align: left;
+  min-height: 180px;
+  position: relative;
+}
+.success-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.success-stories h2 {
+  font-size: 1.47em;
+  color: #1f5230;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+.still-counting {
+  font-size: 1.01em;
+  color: #57b318;
+  font-weight: bold;
+  margin-left: 13px;
+  letter-spacing: 0.015em;
+  opacity: 0.82;
+}
+.stories-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 17px 0;
+  min-height: 170px;
+  transition: opacity 0.5s;
+}
+.story {
+  background: rgba(249,255,240,0.84);
+  border-radius: 11px;
+  padding: 13px 17px;
+  font-size: 1.07em;
+  color: #2b621f;
+  box-shadow: 0 2px 6px #43a04722;
+  border-left:4px solid #43a04755;
+}
+@media (max-width: 700px) {
+  .success-stories { padding: 17px 3vw; max-width:95vw;}
+}
+.action-buttons {
+  max-width: 650px;
+  margin: 25px auto 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.generate-btn {
+  background: linear-gradient(90deg,#43e97b 0,#38f9d7 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.12em;
+  border-radius: 35px;
+  border: none;
+  box-shadow: 0 3px 12px #43a04733;
+  padding: 15px 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.generate-btn:hover {
+  background: linear-gradient(90deg,#379f5e 0,#33d9aa 100%);
+  transform: scale(1.05);
+}
+
+.logout-btn {
+  background: linear-gradient(90deg, #ef4142 10%, #c72020 95%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.12em;
+  border-radius: 35px;
+  border: none;
+  box-shadow: 0 3px 12px #ef414222;
+  padding: 15px 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.logout-btn:hover {
+  background: linear-gradient(90deg, #c72020 10%, #ef4142 95%);
+  transform: scale(1.08);
+}
+.action-buttons-row {
+  max-width: 650px;
+  margin: 25px auto 0 auto;
+  display: flex;
+  flex-direction: row;
+  gap: 22px;
+  align-items: center;
+  justify-content: center;
+}
+.generate-btn, .logout-btn {
+  flex: 1 1 0;
+  min-width: 140px;
+  padding: 13px 0;
+  font-size: 1.05em;
+  border-radius: 35px;
+}
+.generate-btn { 
+  background: linear-gradient(90deg, #43e654, #1baf28 85%);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 3px 12px #43a04733;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.generate-btn:hover {
+  background: linear-gradient(90deg, #1baf28, #43e654 85%);
+  transform: scale(1.08);
+}
+.logout-btn {
+  background: linear-gradient(90deg, #ef4142 10%, #c72020 95%);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 3px 12px #ef414222;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.logout-btn:hover {
+  background: linear-gradient(90deg, #c72020 10%, #ef4142 95%);
+  transform: scale(1.08);
+}
+
+@media (max-width:700px) {
+  .action-buttons-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+  </style>
+  
+  <canvas id="particle-canvas"></canvas>
+  <div id="snackbar"></div>
+  <div id="page-transition-overlay"></div>
+
+  <!-- Hero Section -->
+  <section id="home-section">
+    <div class="hero glass fadein parallax-card">
+      <h1 class="typewriter"></h1>
+      <span class="subtitle">AI Crop Disease Detection</span>
+      <p class="hero-desc">Early disease alerts, smart treatment recommendations, instant insights.<br>Your farm’s future—safe, AI-powered.</p>
+      <div class="stats-box">
+        <div class="stat-card parallax-card">
+          <div class="stat-num" id="stat1"></div>
+          <div class="stat-label">Diseases Detected</div>
+        </div>
+        <div class="stat-card parallax-card">
+          <div class="stat-num" id="stat2"></div>
+          <div class="stat-label">Farmers Helped</div>
+        </div>
+        <div class="stat-card parallax-card">
+          <div class="stat-num" id="stat3"></div>
+          <div class="stat-label">Images Analysed</div>
+        </div>
+      </div>
+<!-- Generate & Logout Buttons -->
+<div class="action-buttons action-buttons-row">
+  <button class="cta-btn generate-btn" onclick="handleGenerate()">Find Disease</button>
+  <button class="cta-btn logout-btn" onclick="handleLogout()">Log Out</button>
+</div>
+
+
+    </div>
+
+    <div id="home-greeting"></div>
+
+    <!-- Success Stories Box (carousel, 4 at a time, "Still Counting..." on right) -->
+<div class="success-stories glass parallax-card">
+  <div class="success-header">
+    <h2>Success Stories</h2>
+    <span class="still-counting">Still Counting...</span>
+  </div>
+  <div class="stories-list" id="stories-list">
+    <!-- JS Will Populate 4 at a Time -->
+  </div>
+</div>
+  </section>
+
+  <!-- Login/Register Sections -->
+  <section id="login-section" class="hidden">
+    <div class="form-card glass parallax-card">
+      <h2>Login</h2>
+      <form onsubmit="handleLogin(event)">
+        <input type="email" id="login-email" placeholder="Email" required>
+        <input type="password" id="login-password" placeholder="Password" required>
+        <button type="submit" class="cta-btn liquid">Sign In</button>
+      </form>
+      <div class="form-msg"></div>
+      <div class="link" onclick="showSection('register')">Don't have an account? Register</div>
+      
+    </div>
+  </section>
+
+  <section id="register-section" class="hidden">
+    <div class="form-card glass parallax-card">
+      <h2>Register</h2>
+      <form onsubmit="handleRegister(event)">
+        <input type="email" id="register-email" placeholder="Email" required>
+        <input type="password" id="register-password" placeholder="Password" required>
+        <button type="submit" class="cta-btn liquid">Create Account</button>
+      </form>
+      <div class="form-msg"></div>
+      <div class="link" onclick="showSection('login')">Already have an account? Login</div>
+    </div>
+  </section>
+
+  <!-- FAQ Accordion -->
+  <section id="faq-section" class="hidden">
+    <div class="info-card glass parallax-card">
+      <h2>FAQ</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFAQ(0)">How does image diagnosis work?</div>
+          <div class="faq-answer">Upload a clear crop image and receive AI-based disease identification instantly.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFAQ(1)">Is AgriGuard free?</div>
+          <div class="faq-answer">AgriGuard provides free basic diagnosis and paid advanced recommendations.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFAQ(2)">Do I need to install an app?</div>
+          <div class="faq-answer">No app needed—just use the web portal from any device!</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    AgriGuard © 2025 — AI Crop Disease Detection Portal  
+      </footer>
+
+</body>
+<script>
+// --- Page transition overlay ---
+function pageTransition() {
+  const overlay = document.getElementById('page-transition-overlay');
+  overlay.classList.add('show-overlay');
+  setTimeout(()=>{ overlay.classList.remove('show-overlay'); },650);
+}
+
+// --- Section display with fade transitions ---
+function showSection(section) {
+  pageTransition();
+  setTimeout(()=>{
+    document.getElementById('home-section').classList.add('hidden');
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('register-section').classList.add('hidden');
+    document.getElementById(section + '-section').classList.remove('hidden');
+    if(section === "home") showGreeting(); else document.getElementById('home-greeting').textContent = "";
+  },320);
+}
+showSection('home');
+
+// --- Animated Particle Background ---
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas(); window.onresize = resizeCanvas;
+
+function createParticles() {
+  let count = Math.floor(window.innerWidth/14)+20;
+  particles = [];
+  for(let i=0; i<count; i++) {
+    particles.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      r: Math.random()*2+1,
+      dx: (Math.random()-0.5)*0.7,
+      dy: (Math.random()-0.5)*0.7,
+      alpha: Math.random()*0.2+0.5,
+      col: (Math.random()>0.6) ? "#43a047" : "#7ed957"
+    });
+  }
+}
+function drawParticles() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,2*Math.PI);
+    ctx.fillStyle = p.col;
+    ctx.globalAlpha = p.alpha;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    p.x += p.dx; p.y += p.dy;
+    if(p.x<0 || p.x>canvas.width) p.dx *= -1;
+    if(p.y<0 || p.y>canvas.height) p.dy *= -1;
+  });
+  requestAnimationFrame(drawParticles);
+}
+createParticles(); drawParticles(); window.onresize = ()=>{resizeCanvas();createParticles();};
+
+let allCards = document.querySelectorAll('.parallax-card');
+document.addEventListener('mousemove', (e)=>{
+  let cx = window.innerWidth/2, cy = window.innerHeight/2;
+  let dx = (e.clientX-cx)/cx, dy = (e.clientY-cy)/cy;
+  allCards.forEach(card=>{
+    card.style.setProperty('--rx',dx.toFixed(2));
+    card.style.setProperty('--ry',dy.toFixed(2));
+    card.classList.add('parallax-hover');
+  });
+});
+document.addEventListener('mouseleave', ()=>{
+  allCards.forEach(card=>card.classList.remove('parallax-hover'));
+});
+
+// -- Animated Stats --
+
+// --- Success Stories Carousel (4 at a time) ---
+const allSuccessStories = [
+  { name: "Rajesh, Punjab", story: "AgriGuard detected leaf blight in my wheat early. I saved over 60% of my crop. Grateful!" },
+  { name: "Sunita, Gujarat", story: "Quick photo upload helped me treat rice blast before it spread. Amazing results!" },
+  { name: "Vikas, Maharashtra", story: "I now diagnose tomato problems instantly—fast & reliable." },
+  { name: "Kiran, AP", story: "Detected chilli pest in time, got AI advice, and my yield increased by 40%!" },
+  { name: "Sachin, Haryana", story: "MSP confusion solved, focused more on crop health with AgriGuard support." },
+  { name: "Deepa, Karnataka", story: "AI recommendations were easy to follow. My groundnut field is healthier." },
+  { name: "Mahesh, UP", story: "Found yellow rust in wheat by uploading a photo. Used the suggested action plan—success!" },
+  { name: "Poonam, Nashik", story: "Saved money on unnecessary sprays with accurate diagnosis suggestions." },
+  { name: "Farmer Group, Kolhapur", story: "Our association tested AgriGuard for sugarcane. All farmers are satisfied!" },
+  { name: "Mukesh, Rajasthan", story: "Detected early downy mildew in bajra. AgriGuard guidance prevented loss." },
+  { name: "Akash, Vidarbha", story: "Timely detection of cotton wilt helped me save my field." },
+  { name: "Geeta, MP", story: "Easy to use and works on my mobile. Diagnosed groundnut leaf spot effectively." },
+  { name: "Amit, Bihar", story: "I shared the tool with my village. Everybody impressed by instant disease reports!" },
+  { name: "Reshma, Telangana", story: "Got alerts for red leaf spot in paddy—followed all tips, no losses this year." },
+  { name: "Naresh, Odisha", story: "Used AgriGuard on maize farm. Detected stalk rot early and took action." },
+  { name: "Dr. Mehta, Agronomist", story: "The database and field images help students and farmers alike." },
+  { name: "Krishna, Tamil Nadu", story: "Early blight in brinjal detected easily. Best service ever!" },
+  { name: "Anita, Chhattisgarh", story: "Crop photo diagnosis is accurate. No more guesswork." },
+  { name: "Raju, Jalgaon", story: "I use it every season. Less crop loss, better profits!" },
+  { name: "Joshi, Maharashtra", story: "Mango hoppers—spotted & solved in days, thanks to AgriGuard AI." },
+  { name: "Shivani, West Bengal", story: "Detected rice blast and brown spot separately; helped both cases neatly." },
+  { name: "Shamsher, UP", story: "Photo upload for sugarcane smut. Solved in one week." },
+  { name: "Bikram, Tripura", story: "Potato late blight, diagnosed and solved before it was too late!" },
+  { name: "Meera, Kerala", story: "Banana wilt solutions by AgriGuard were spot-on for my organic farms." },
+  { name: "Sneha, Goa", story: "All small farmers in our club rely on AgriGuard for crop health advice." }
+];
+
+let currentStoryBatch = 0;
+const STORIES_PER_PAGE = 4;
+
+function renderStoryBatch() {
+  const list = document.getElementById('stories-list');
+  if (!list) return;
+  list.style.opacity = 0;
+  setTimeout(() => {
+    list.innerHTML = "";
+    let start = currentStoryBatch * STORIES_PER_PAGE;
+    let batch = allSuccessStories.slice(start, start + STORIES_PER_PAGE);
+    // Loop back if end reached
+    if (batch.length < STORIES_PER_PAGE) {
+      let remainder = STORIES_PER_PAGE - batch.length;
+      batch = batch.concat(allSuccessStories.slice(0, remainder));
+      currentStoryBatch = -1; // Will wrap to 0 on next increment
+    }
+    batch.forEach(obj => {
+      const el = document.createElement('div');
+      el.className = "story";
+      el.innerHTML = `<b>${obj.name}:</b> ${obj.story}`;
+      list.appendChild(el);
+    });
+    list.style.opacity = 1;
+  }, 350);
+}
+
+setInterval(() => {
+  currentStoryBatch++;
+  if (currentStoryBatch * STORIES_PER_PAGE >= allSuccessStories.length) currentStoryBatch = 0;
+  renderStoryBatch();
+}, 3400);
+
+window.addEventListener('DOMContentLoaded', renderStoryBatch);
+
+const statNums = [732, 14820, 7217]; const statEls = ["stat1", "stat2", "stat3"]; let statAnimDone = false;
+function animateStats() {
+  if(statAnimDone) return; statAnimDone = true;
+  statNums.forEach((num, idx)=>{
+    let el = document.getElementById(statEls[idx]);
+    let c=0, end=num, inc=Math.ceil(end/70);
+    let timer = setInterval(()=>{
+      if(c<end){ c+=inc; if(c>end) c=end; el.textContent = c.toLocaleString();} else clearInterval(timer);
+    }, 17 + idx*7);
+  });
+}
+window.addEventListener('load', animateStats);
+
+// --- Typewriter headline ---
+// --- Static Main Heading (shows only "AgriGuard") ---
+document.addEventListener("DOMContentLoaded", function() {
+  const header = document.querySelector('.typewriter');
+  if (header) header.textContent = "AgriGuard";
+});
+
+// --- Typewriter News ---
+const newsArray = [
+  "🌾 Wheat rust detected in Punjab.",
+  "🧬 New AI cure for rice blast!",
+  "🚜 Over 14,000 acres protected.",
+  "🛰️ Drone diagnosis now nationwide!",
+  "💡 Farmers saved 30% yield last year.",
+  "🌱 Personalized soil advice is here.",
+  "⚡ Real-time alerts, instant solutions!",
+];
+let currNewsIdx=0, currChar=0;
+function typewriterNews() {
+  const elem = document.getElementById('typewriter-news');
+  let txt = newsArray[currNewsIdx];
+  if (currChar <= txt.length) {
+    elem.textContent = txt.slice(0, currChar) + (currChar%2==0?'|':' ');
+    currChar++;
+    setTimeout(typewriterNews, 32);
+  } else {
+    elem.textContent = txt;
+    setTimeout(()=>{ currNewsIdx = (currNewsIdx+1)%newsArray.length; currChar=0; typewriterNews(); },1600);
+  }
+}
+typewriterNews();
+
+// --- Autoplay/ripple Testimonial Carousel with 3D flip ---
+const testimonialsArr = [
+  { name: "Rajesh, Punjab", story: "AgriGuard diagnosed leaf blight early and saved my wheat harvest! Responsive, simple, and effective—love it." },
+  { name: "Sunita, Gujarat", story: "Simple upload helped me treat rice blast before it spread. The advice was spot-on!" },
+  { name: "Vikas, Maharashtra", story: "Now I can get instant advice for tomato blight just by clicking a photo. It works!" },
+  { name: "Dr. Mehta, Agronomist", story: "The disease database and smart recommendations are the future of farming!" }
+];
+let tIdx=0;
+function showTestimonial(flip=true) {
+  const block = document.getElementById('testimonial-text');
+  if(flip){
+    block.classList.add('flip');
+    setTimeout(()=> {
+      block.innerHTML = `${testimonialsArr[tIdx].name}: ${testimonialsArr[tIdx].story}`;
+      block.classList.remove('flip');
+    },330);
+  } else { block.innerHTML = `${testimonialsArr[tIdx].name}: ${testimonialsArr[tIdx].story}`; block.classList.remove('flip'); }
+}
+function nextTestimonial() { tIdx=(tIdx+1)%testimonialsArr.length;showTestimonial(); }
+function prevTestimonial() { tIdx=(tIdx-1+testimonialsArr.length)%testimonialsArr.length;showTestimonial(); }
+showTestimonial(false);
+setInterval(()=>{ nextTestimonial(); },3800);
+
+// --- Personalized Greeting ---
+function handleLogin(event) {
+  event.preventDefault();
+  const email = document.getElementById('login-email').value;
+  localStorage.setItem('userEmail', email);
+  showSnackbar("Login successful! 🚀");
+  showSection('home');
+  showGreeting();
+}
+function handleRegister(event) {
+  event.preventDefault();
+  showSnackbar("Registration successful! Please login.");
+  showSection('login');
+}
+function showGreeting() {
+  const email = localStorage.getItem('userEmail');
+  const greetingBlock = document.getElementById('home-greeting');
+  if (email) greetingBlock.innerHTML = `Welcome back, ${email}! 🚜`; else greetingBlock.innerHTML = "";
+}
+
+// --- FAQ Accordion ---
+function toggleFAQ(idx) {
+  const items = document.querySelectorAll('.faq-answer');
+  for(let i=0;i<items.length;i++) {
+    items[i].style.display = (i===idx && items[i].style.display!=="block") ? "block" : "none";
+  }
+}
+
+// --- Snackbar Notifications ---
+function showSnackbar(msg) {
+  let bar = document.getElementById('snackbar');
+  bar.textContent = msg; bar.style.visibility = "visible";
+  setTimeout(()=>{ bar.style.visibility="hidden"; },2100);
+}
+
+function handleGenerate() {
+  window.location.href = "page3.html";
+}
+
+function handleLogout() {
+  localStorage.removeItem('userEmail');
+  window.location.href = "index.html";
+}
+
+</script>
+
+
+
+
+
+</html>
