@@ -6,6 +6,7 @@ import numpy as np
 import uvicorn
 import os
 import json
+from mangum import Mangum
 
 app = FastAPI()
 
@@ -83,3 +84,5 @@ async def predict(file: UploadFile = File(...)):
 # ----------------------------
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+handler = Mangum(app)

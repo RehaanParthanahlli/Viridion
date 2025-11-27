@@ -6,6 +6,14 @@ const removeBtn = document.getElementById("removeBtn");
 const loading = document.getElementById("loading");
 const container = document.getElementById("container");
 
+// ✅ Detect environment: local vs Netlify
+const API_BASE =
+  window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:8000"
+    : "/.netlify/functions/main";
+
+console.log("Backend API Base URL:", API_BASE); // helpful debug log
+
 imageInput.addEventListener("change", () => {
   const file = imageInput.files[0];
   if (file) {
@@ -44,8 +52,8 @@ uploadBtn.addEventListener("click", async () => {
   formData.append("file", file);
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/predict", {
-
+    // ✅ Use dynamic API_BASE
+    const response = await fetch(`${API_BASE}/predict`, {
       method: "POST",
       body: formData,
     });
