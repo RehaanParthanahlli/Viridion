@@ -21,9 +21,9 @@ app.add_middleware(
 # ----------------------------
 # MODEL & CLASS SETUP
 # ----------------------------
-MODEL_PATH = "backend/model/model_output/crop_disease_model.h5"
-DATASET_PATH = "backend/model/dataset_raw/PlantVillage"
-CLASS_JSON_PATH = "backend/model/model_output/class_names.json"
+MODEL_PATH = "/backend/model/model_output/crop_disease_model.h5"
+DATASET_PATH = "/backend/model/dataset_raw/PlantVillage"
+CLASS_JSON_PATH = "/backend/model/model_output/class_names.json"
 
 # Load model
 model = tf.keras.models.load_model(MODEL_PATH)
