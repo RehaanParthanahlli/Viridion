@@ -7,7 +7,7 @@ const loading = document.getElementById("loading");
 const container = document.getElementById("container");
 
 // ✅ Always use Netlify Functions endpoint
-const API_BASE = "/.netlify/functions/main";
+const API_BASE = "/.netlify/functions";
 
 console.log("Backend API Base URL:", API_BASE); // helpful debug log
 
