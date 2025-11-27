@@ -28,7 +28,6 @@ DATASET_PATH = os.path.join(BASE_DIR, "PlantVillage")
 CLASS_JSON_PATH = os.path.join(BASE_DIR, "class_names.json")
 
 
-
 # Load model
 model = tf.keras.models.load_model(MODEL_PATH)
 
