@@ -6,8 +6,9 @@ const removeBtn = document.getElementById("removeBtn");
 const loading = document.getElementById("loading");
 const container = document.getElementById("container");
 
-// ✅ Always use Netlify Functions endpoint
-const API_BASE = "/.netlify/functions/main";
+// ✅ Use Render backend endpoint instead of Netlify
+// Replace with your actual Render service URL
+const API_BASE = "https://your-app.onrender.com";
 
 console.log("Backend API Base URL:", API_BASE); // helpful debug log
 
@@ -49,7 +50,7 @@ uploadBtn.addEventListener("click", async () => {
   formData.append("file", file);
 
   try {
-    // ✅ Always call Netlify function
+    // ✅ Call Render backend endpoint
     const response = await fetch(`${API_BASE}/predict`, {
       method: "POST",
       body: formData,
